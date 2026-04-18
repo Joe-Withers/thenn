@@ -1,0 +1,14 @@
+<svg width="600" height="200" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>thenn logo</title>
+  <desc>thenn wordmark all in burnt orange with arrow underline, transparent background</desc>
+  <text
+    x="60"
+    y="130"
+    font-family="'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="100"
+    font-weight="900"
+    letter-spacing="-4"
+    fill="#EA580C">thenn</text>
+  <line x1="60" y1="152" x2="510" y2="152" stroke="#EA580C" stroke-width="3" stroke-linecap="round"/>
+  <path d="M500 142 L512 152 L500 162" stroke="#EA580C" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

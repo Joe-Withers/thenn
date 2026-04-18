@@ -1,4 +1,6 @@
-# thenn
+<div align="center">
+  <img src="artifacts/thenn-logo.svg" alt="thenn" />
+</div>
 
 > Simple, repeatable AI workflows. Define named flows that chain AI commands, agents, and bash steps — then just run them.
 
