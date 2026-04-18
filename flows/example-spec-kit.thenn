@@ -1,0 +1,35 @@
+# Example flow — starting point, copy to .thenn/ and make it your own
+# Requires: github/spec-kit plugin installed
+# Commands: speckit.specify, speckit.clarify, speckit.plan, speckit.tasks
+# Artifacts: spec.md, plan.md, tasks.md (paths determined by speckit.specify on first run)
+
+name: example-spec-kit
+description: Spec-driven feature development — specify, clarify, plan, tasks, commit
+input: "What do you want to build?"
+
+steps:
+  - id: specify
+    type: claude
+    command: speckit.specify     # prompts for feature directory, creates spec.md
+    input: true
+
+  - id: clarify
+    type: claude
+    command: speckit.clarify     # asks up to 5 clarifying questions, encodes answers into spec
+
+  - id: review-spec
+    type: human
+    message: "Review the spec. Edit if needed, then press Continue"
+
+  - id: plan
+    type: claude
+    command: speckit.plan        # reads spec, creates plan.md
+
+  - id: tasks
+    type: claude
+    command: speckit.tasks       # reads plan, creates tasks.md
+
+  - id: commit-docs
+    type: bash
+    run: git add . && git commit -m "chore: add spec, plan and tasks"
+    on_failure: stop

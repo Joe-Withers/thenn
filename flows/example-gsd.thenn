@@ -1,0 +1,26 @@
+# Example flow — starting point, copy to .thenn/ and make it your own
+# Requires: gsd-build/get-shit-done installed
+# Prerequisite: run /gsd:new-project once to initialise project context before using this flow
+# Commands: gsd:spec-phase, gsd:plan-phase, gsd:execute-phase
+
+name: example-gsd
+description: Get something done — spec, plan, review, execute
+input: "What do you want to build?"
+
+steps:
+  - id: spec
+    type: claude
+    command: "gsd:spec-phase"    # clarifies WHAT the phase delivers, produces SPEC.md
+    input: true
+
+  - id: plan
+    type: claude
+    command: "gsd:plan-phase"    # decomposes into tasks, produces PLAN.md
+
+  - id: review-plan
+    type: human
+    message: "Review the plan. Adjust scope if needed, then press Continue"
+
+  - id: execute
+    type: claude
+    command: "gsd:execute-phase" # executes all plans in the phase

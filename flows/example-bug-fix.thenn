@@ -1,0 +1,35 @@
+# Example flow — starting point, copy to .thenn/ and make it your own
+# Self-contained: uses inline prompts, no external commands required
+# Artifacts produced: docs/bug-analysis.md
+
+name: example-bug-fix
+description: Reproduce, diagnose, human gate, fix, verify, commit
+input: "Describe the bug"
+
+steps:
+  - id: reproduce
+    type: claude
+    input: true
+    prompt: "Reproduce the bug described by the user. Document what you tried and the exact error or incorrect behaviour in docs/bug-analysis.md."
+
+  - id: root-cause
+    type: claude
+    prompt: "Read docs/bug-analysis.md. Investigate the codebase to find the root cause. Append your findings under a 'Root cause' heading in docs/bug-analysis.md."
+
+  - id: review-diagnosis
+    type: human
+    message: "Review docs/bug-analysis.md. Confirm the root cause before the fix begins"
+
+  - id: fix
+    type: claude
+    prompt: "Read docs/bug-analysis.md and fix the root cause. Do not change anything unrelated to the bug."
+
+  - id: verify
+    type: bash
+    run: npm test
+    on_failure: human
+
+  - id: commit
+    type: bash
+    run: git add -A && git commit -m "fix: resolve bug per analysis"
+    on_failure: stop

@@ -1,0 +1,37 @@
+# Example flow — starting point, copy to .thenn/ and make it your own
+# Self-contained: uses inline prompts, no external commands required
+# Artifacts produced: docs/review.md
+
+name: example-review-loop
+description: Implement, then fix until review passes (max 4 iterations)
+input: "What do you want to build?"
+
+steps:
+  - id: implement
+    type: claude
+    input: true
+    prompt: "Implement the feature described in the user's request."
+
+  - id: review-fix-loop
+    type: loop
+    max_iterations: 4
+    until:
+      type: bash
+      run: grep -q "^status: pass" docs/review.md
+    steps:
+      - id: review
+        type: claude
+        prompt: "Review the implementation. Write docs/review.md with exactly 'status: pass' on the first line if it looks good, or 'status: fail' on the first line followed by a concise list of specific issues if not."
+
+      - id: fix
+        type: claude
+        prompt: "Read docs/review.md. If status is fail, fix every issue listed. Do not change anything not mentioned in the review."
+
+  - id: final-review
+    type: human
+    message: "Implementation passed automated review. Do a final check, then press Continue"
+
+  - id: commit
+    type: bash
+    run: git add -A && git commit -m "feat: implement with review"
+    on_failure: stop
