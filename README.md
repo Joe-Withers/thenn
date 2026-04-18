@@ -4,6 +4,13 @@
 
 > Simple, repeatable AI workflows. Define named flows that chain AI commands, agents, and bash steps — then just run them.
 
+## Installation
+
+```
+/plugin marketplace add Joe-Withers/thenn
+/plugin install thenn@thenn
+```
+
 ## Usage
 
 ```
