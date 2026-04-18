@@ -2,7 +2,7 @@
 # Self-contained: uses inline prompts, no external commands required
 # Artifacts produced: docs/review.md
 
-name: example-e2e-simple
+name: example-make-feature
 description: Implement, review-fix loop, commit
 input: "What do you want to build?"
 
