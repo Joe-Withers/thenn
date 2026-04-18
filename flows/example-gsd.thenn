@@ -10,11 +10,12 @@ input: "What do you want to build?"
 steps:
   - id: spec
     type: claude
-    command: "gsd:spec-phase"    # clarifies WHAT the phase delivers, produces SPEC.md
     input: true
+    command: "gsd:spec-phase"    # clarifies WHAT the phase delivers, produces SPEC.md
 
   - id: plan
     type: claude
+    input: false
     command: "gsd:plan-phase"    # decomposes into tasks, produces PLAN.md
 
   - id: review-plan
@@ -23,4 +24,5 @@ steps:
 
   - id: execute
     type: claude
+    input: false
     command: "gsd:execute-phase" # executes all plans in the phase

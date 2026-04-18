@@ -21,10 +21,12 @@ steps:
     steps:
       - id: review
         type: claude
+        input: false
         prompt: "Review the implementation. Write docs/review.md with exactly 'status: pass' on the first line if it looks good, or 'status: fail' on the first line followed by a concise list of specific issues if not."
 
       - id: fix
         type: claude
+        input: false
         prompt: "Read docs/review.md. If status is fail, fix every issue listed. Do not change anything not mentioned in the review."
 
   - id: final-review

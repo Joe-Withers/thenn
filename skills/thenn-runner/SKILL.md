@@ -30,9 +30,14 @@ steps:
 ```yaml
 command: name-of-command  # calls /name-of-command slash command
 agent: name-of-agent      # spawns a named subagent
-prompt: "..."             # inline prompt (escape hatch, use sparingly)
+prompt: "..."             # standalone: full inline prompt; combined with command/agent: appended as additional context
 ```
-Only one of `command`, `agent`, or `prompt` is valid per step. If multiple are set, use this precedence: `command` > `agent` > `prompt`.
+
+`prompt` behaviour:
+- `prompt` alone → used as the full subagent instruction
+- `command` + `prompt` → run the command, append `prompt` as additional context
+- `agent` + `prompt` → spawn the agent, append `prompt` as additional context
+- `command` + `agent` → use `command`, ignore `agent`, warn once
 
 `type: bash` — runs a shell command:
 ```yaml
@@ -138,7 +143,7 @@ Run the value of `run` using the Bash tool.
 3. If found: spawn a subagent using the Agent tool:
    - `subagent_type: "general-purpose"`
    - `description: "Run the /<name> command"`
-   - `prompt: "Run the /<name> slash command and complete the task it describes."` (append input block if `input: true` — see below)
+   - `prompt: "Run the /<name> slash command and complete the task it describes."` followed by any `prompt` value from the step as an "Additional context:" block, then the input block if `input: true`
 4. Wait for the subagent to complete before moving to the next step.
 5. If the subagent reports it could not complete the task, stop the flow and report the error.
 
@@ -149,7 +154,7 @@ Run the value of `run` using the Bash tool.
 Spawn a subagent using the Agent tool:
 - `subagent_type`: use the `agent` value if it matches a known subagent type; otherwise use `"general-purpose"` and reference the agent name in the prompt
 - `description`: name the agent and its role in the flow
-- `prompt`: describe the task clearly, including what files to read and what output is expected (append input block if `input: true` — see below)
+- `prompt`: describe the task clearly, including what files to read and what output is expected, followed by any `prompt` value from the step as an "Additional context:" block, then the input block if `input: true`
 
 Wait for the subagent to complete before proceeding.
 
@@ -166,16 +171,18 @@ Wait for the subagent to complete before proceeding.
 
 ---
 
-### Input injection (`input: true`)
+### Input injection (`input: true | false`)
 
-Steps opt in to receiving the user's input by setting `input: true`. Only steps that need the original description — typically the first step in the flow — should set this. Later steps that read from files written by earlier steps should not, since the filesystem provides their context.
+Every `type: claude` step must declare `input: true` or `input: false`. This makes the intent explicit — which steps receive the user's run-time description and which rely solely on files written by earlier steps.
 
-If a step has `input: true` and `.thenn-state/input.md` exists, append this block to the subagent prompt:
+- `input: true` — append the contents of `.thenn-state/input.md` to the subagent prompt:
+  ```
+  User's request for this flow run:
+  <contents of .thenn-state/input.md>
+  ```
+- `input: false` — do not append any input; the step reads its context from disk
 
-```
-User's request for this flow run:
-<contents of .thenn-state/input.md>
-```
+When generating or authoring flows, set `input: true` on any step that needs the user's original description to do its job correctly — not just the first step. Ask: "Could this step do its job using only files on disk, without knowing what the user originally asked for?" If no, use `input: true`. Steps that purely execute against an already-written plan or spec can use `input: false`.
 
 If `input: true` is set but `.thenn-state/input.md` does not exist (no input was provided at run time), proceed without the block — don't error.
 
@@ -253,6 +260,7 @@ On early stop:
 | `type: bash` fails, `on_failure: human` | Ask: retry / skip / abort |
 | Step missing `id` | Use `step-N` as fallback (e.g. `step-3`) — don't fail |
 | `command` + `agent` both set | Use `command`, ignore `agent`, warn once |
+| `command` or `agent` + `prompt` | Run command/agent with `prompt` appended as additional context |
 | `type: loop` missing `max_iterations` | Abort: "`loop` step requires `max_iterations`" |
 | `type: loop` missing `until` | Abort: "`loop` step requires `until`" |
 | `type: loop` `steps` empty | Warn and skip — treat as no-op |

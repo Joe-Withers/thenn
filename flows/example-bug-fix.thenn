@@ -14,6 +14,7 @@ steps:
 
   - id: root-cause
     type: claude
+    input: false
     prompt: "Read docs/bug-analysis.md. Investigate the codebase to find the root cause. Append your findings under a 'Root cause' heading in docs/bug-analysis.md."
 
   - id: review-diagnosis
@@ -22,6 +23,7 @@ steps:
 
   - id: fix
     type: claude
+    input: false
     prompt: "Read docs/bug-analysis.md and fix the root cause. Do not change anything unrelated to the bug."
 
   - id: verify

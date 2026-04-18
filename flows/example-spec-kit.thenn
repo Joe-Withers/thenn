@@ -10,11 +10,12 @@ input: "What do you want to build?"
 steps:
   - id: specify
     type: claude
-    command: speckit.specify     # prompts for feature directory, creates spec.md
     input: true
+    command: speckit.specify     # prompts for feature directory, creates spec.md
 
   - id: clarify
     type: claude
+    input: false
     command: speckit.clarify     # asks up to 5 clarifying questions, encodes answers into spec
 
   - id: review-spec
@@ -23,10 +24,12 @@ steps:
 
   - id: plan
     type: claude
+    input: false
     command: speckit.plan        # reads spec, creates plan.md
 
   - id: tasks
     type: claude
+    input: false
     command: speckit.tasks       # reads plan, creates tasks.md
 
   - id: commit-docs
