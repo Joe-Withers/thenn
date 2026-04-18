@@ -109,22 +109,6 @@ The thenn file is the wiring. The intelligence lives in your commands, agents, a
       prompt: "Read docs/review.md. Fix every issue listed."
 ```
 
-## Installation
-
-Copy or symlink the command and skill into your global Claude config:
-
-```bash
-# Clone
-git clone https://github.com/Joe-Withers/thenn.git ~/thenn
-
-# Symlink globally
-mkdir -p ~/.claude/commands ~/.claude/skills/thenn-runner
-ln -s ~/thenn/commands/thenn.md ~/.claude/commands/thenn.md
-ln -s ~/thenn/skills/thenn-runner/SKILL.md ~/.claude/skills/thenn-runner/SKILL.md
-```
-
-Then in any project, create a `.thenn/` directory and add your flow files.
-
 ## Example flows
 
 Five example flows are bundled in `flows/` as starting points. Copy any into your project's `.thenn/` directory and adapt:
