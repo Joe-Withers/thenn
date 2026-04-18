@@ -1,8 +1,5 @@
 {
   "name": "thenn",
-  "version": "0.1.0",
   "description": "Simple, repeatable AI workflows. Define named flows that chain commands, agents, and bash steps.",
-  "keywords": ["workflow", "automation", "flows"],
-  "commands": ["thenn"],
-  "skills": ["thenn-runner"]
+  "version": "0.1.0"
 }

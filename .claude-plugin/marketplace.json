@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "thenn",
+  "owner": {
+    "name": "Joe Withers"
+  },
+  "plugins": [
+    {
+      "name": "thenn",
+      "description": "Simple, repeatable AI workflows. Define named flows that chain commands, agents, and bash steps.",
+      "source": {
+        "source": "github",
+        "repo": "Joe-Withers/thenn"
+      },
+      "homepage": "https://github.com/Joe-Withers/thenn",
+      "keywords": ["workflow", "automation", "flows"],
+      "category": "productivity"
+    }
+  ]
+}
