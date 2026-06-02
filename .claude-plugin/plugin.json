@@ -1,5 +1,5 @@
 {
   "name": "thenn",
   "description": "Simple, repeatable AI workflows. Define named flows that chain commands, agents, and bash steps.",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
