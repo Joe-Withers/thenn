@@ -12,14 +12,16 @@ Split `$ARGUMENTS` on whitespace. The first token is the subcommand; the second 
 
 - For `run`: remainder is the **input** (e.g. `/thenn run spec-kit add a dark mode toggle` → input=`add a dark mode toggle`)
 - For `new`: remainder is the **description** (e.g. `/thenn new my-flow iterative review and fix` → description=`iterative review and fix`)
+- For `update`: remainder is the **change description** (e.g. `/thenn update my-flow add a human review step after commit` → change=`add a human review step after commit`)
 
 If no subcommand is provided, output the usage below and stop:
 
 ```
 Usage:
-  /thenn run <name> [input...]    Run a named flow (optional: describe what you want)
-  /thenn list                     List available flows (project + personal)
-  /thenn new <name> [description] Scaffold a new .thenn file in .thenn/
+  /thenn run <name> [input...]           Run a named flow (optional: describe what you want)
+  /thenn list                            List available flows (project + personal)
+  /thenn new <name> [description]        Scaffold a new .thenn file in .thenn/
+  /thenn update <name> [change...]       Edit an existing flow
 ```
 
 ---
@@ -58,46 +60,45 @@ Bundled starter flows are in the thenn plugin's flows/ directory — copy one to
 
 ## Subcommand: new \<name\>
 
-1. Run `mkdir -p .thenn` to ensure the directory exists.
-2. Check if `.thenn/<name>.thenn` already exists. If it does, use AskUserQuestion to confirm: "`.thenn/<name>.thenn` already exists. Overwrite?" with options `["Yes, overwrite", "Cancel"]`. If cancelled, stop.
-3. If a description was provided, use it to generate a complete, meaningful flow rather than the generic scaffold. Design the steps based on the described workflow, then apply this rule to every `type: claude` step:
-
-   **Deciding `input: true` vs `input: false`:**
-   Set `input: true` on any step that needs the user's original run-time description to do its job — not just the first step. Ask: "Could this step do its job correctly using only files on disk, without knowing what the user originally asked for?" If no, set `input: true`.
-
-   Common pattern: early steps that establish context (reproduce, plan, specify) often need `input: true` even if a previous step already ran, because the files written so far may not capture the full human intent. Later steps that purely execute against a written plan or spec can use `input: false`.
-
-4. Write the flow to `.thenn/<name>.thenn`, substituting `<name>` for the actual name and `<description>` for the remainder text if provided, or `Describe what this flow does` if not. If no description was provided, use the generic scaffold below:
-
-```yaml
-name: <name>
-description: <description>
-input: "What do you want to build?"   # optional: ask this if no args given at run time
-
-steps:
-  # Run a slash command in a fresh context
-  - id: step-one
-    type: claude
-    input: true                  # true: inject user's run-time description; false: read context from disk
-    command: your-command-name   # must exist in .claude/commands/
-
-  # Pause for human review
-  - id: review
-    type: human
-    message: "Review the output, then press Continue"
-
-  # Run a shell command
-  - id: commit
-    type: bash
-    run: git add . && git commit -m "chore: from thenn flow"
-    on_failure: stop   # stop | continue | human
+If no name was provided after `new`, output:
 ```
+Usage: /thenn new <name> [description]
+```
+Then stop.
 
-4. Confirm to the user:
-   ```
-   Created .thenn/<name>.thenn
-   Edit it to define your steps, then run it with: /thenn run <name>
-   ```
+Otherwise:
+
+**Load the thenn-builder skill.**
+
+Use the Skill tool to load `thenn-builder` before doing anything else. The skill contains the complete scaffold protocol — follow it to create the flow file, passing `<name>` and `<description>` (if provided).
+
+---
+
+## Subcommand: update \<name\>
+
+If no name was provided after `update`, output:
+```
+Usage: /thenn update <name> [change description...]
+```
+Then stop.
+
+Otherwise:
+
+**1. Locate the flow file.**
+
+Check in order:
+1. `.thenn/<name>.thenn`
+2. `~/.thenn/<name>.thenn`
+
+If not found in either location, output:
+```
+Flow '<name>' not found. Use /thenn new <name> to create it.
+```
+Then stop.
+
+**2. Load the thenn-builder skill.**
+
+Use the Skill tool to load `thenn-builder` before doing anything else. The skill contains the complete update protocol — follow it, passing the resolved file path and `<change>` (if provided).
 
 ---
 
