@@ -8,12 +8,12 @@ input: "Describe the bug"
 
 steps:
   - id: reproduce
-    type: claude
+    type: agent
     input: true
     prompt: "Reproduce the bug described by the user. Document what you tried and the exact error or incorrect behaviour in docs/bug-analysis.md."
 
   - id: root-cause
-    type: claude
+    type: agent
     input: false
     prompt: "Read docs/bug-analysis.md. Investigate the codebase to find the root cause. Append your findings under a 'Root cause' heading in docs/bug-analysis.md."
 
@@ -22,7 +22,7 @@ steps:
     message: "Review docs/bug-analysis.md. Confirm the root cause before the fix begins"
 
   - id: fix
-    type: claude
+    type: agent
     input: false
     prompt: "Read docs/bug-analysis.md and fix the root cause. Do not change anything unrelated to the bug."
 

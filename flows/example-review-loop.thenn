@@ -8,7 +8,7 @@ input: "What do you want to build?"
 
 steps:
   - id: implement
-    type: claude
+    type: agent
     input: true
     prompt: "Implement the feature described in the user's request."
 
@@ -20,12 +20,12 @@ steps:
       run: grep -q "^status: pass" docs/review.md
     steps:
       - id: review
-        type: claude
+        type: agent
         input: false
         prompt: "Review the implementation. Write docs/review.md with exactly 'status: pass' on the first line if it looks good, or 'status: fail' on the first line followed by a concise list of specific issues if not."
 
       - id: fix
-        type: claude
+        type: agent
         input: false
         prompt: "Read docs/review.md. If status is fail, fix every issue listed. Do not change anything not mentioned in the review."
 

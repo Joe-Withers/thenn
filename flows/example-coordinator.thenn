@@ -1,0 +1,46 @@
+# Example flow — starting point, copy to .thenn/ and make it your own
+# Self-contained: uses inline prompts, no external commands required
+# Artifacts produced: .thenn-state/{context,findings-*,actions}.md
+#
+# Demonstrates the coordinator type: a step that runs in the
+# orchestrator's main conversation (not as a subagent) so it can fan
+# out to multiple subagents in parallel. type: agent cannot do this —
+# a subagent cannot spawn further subagents. Only the runner can,
+# which is what type: coordinator turns you into.
+
+name: example-coordinator
+description: Coordinator fan-out — gather context, three parallel investigations, synthesize, review
+input: "What do you want to build or change?"
+
+steps:
+  - id: gather-context
+    type: agent
+    input: true
+    prompt: "Read README.md and CLAUDE.md (if present). Write a short context brief — what the project is, who uses it, the stack, and any constraints — to .thenn-state/context.md."
+
+  - id: parallel-investigate
+    type: coordinator        # runner does the work, can spawn subagents
+    input: false
+    prompt: |
+      Read .thenn-state/context.md. You are the thenn-runner orchestrator
+      acting as a context-light coordinator — fan out to three parallel
+      investigations using the Agent tool:
+      1. Performance — hot paths, slow queries, unnecessary work
+      2. Security — unsafe input handling, secrets, auth gaps
+      3. Maintainability — code smells, dead code, missing tests
+
+      For each angle, spawn a general-purpose subagent with a clear, scoped
+      brief. Each subagent writes findings to .thenn-state/findings-<angle>.md.
+      Do not redo the investigation yourself — your job is to coordinate.
+
+      Return a one-line summary per angle when done. The thenn-runner will
+      then move to the next step.
+
+  - id: synthesize
+    type: agent
+    input: false
+    prompt: "Read .thenn-state/findings-{performance,security,maintainability}.md. Synthesize into a prioritized action list at .thenn-state/actions.md (top 5-10 items, each with file:line references where possible)."
+
+  - id: review
+    type: human
+    message: "Review .thenn-state/actions.md. Mark items to act on, then press Continue"

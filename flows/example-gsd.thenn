@@ -9,12 +9,12 @@ input: "What do you want to build?"
 
 steps:
   - id: spec
-    type: claude
+    type: agent
     input: true
     command: "gsd:spec-phase"    # clarifies WHAT the phase delivers, produces SPEC.md
 
   - id: plan
-    type: claude
+    type: agent
     input: false
     command: "gsd:plan-phase"    # decomposes into tasks, produces PLAN.md
 
@@ -23,6 +23,6 @@ steps:
     message: "Review the plan. Adjust scope if needed, then press Continue"
 
   - id: execute
-    type: claude
+    type: agent
     input: false
     command: "gsd:execute-phase" # executes all plans in the phase
