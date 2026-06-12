@@ -15,9 +15,10 @@
 
 ```
 /thenn.run <name> [input...]      Run a named flow
+/thenn.resume [ts]                Run a flow with journaling; resume a crashed run, or start a new journaled one
 /thenn.new <name> [description]   Scaffold a new flow
 /thenn.update <name> [change...]  Edit an existing flow
-/thenn.list                       List available flows
+/thenn.list                       List available flows and any in-progress journaled runs
 ```
 
 ## How it works
@@ -71,6 +72,8 @@ Scaffold a new flow from a description:
 ```
 /thenn.new bugfix reproduce bug -> plan fix -> human review -> implement -> lint -> commit
 ```
+
+**Resume crashed runs.** Use `/thenn.resume` (instead of `/thenn.run`) to record step start/end/status in `.thenn-state/runs/<ts>/`. If the flow dies mid-run — network drop, Ctrl-C, session timeout — `/thenn.resume` picks up at the next step after the last completed one. No re-runs of `git commit`, no re-prompts at human gates. See `docs/v0.3/journal.md` for the full protocol.
 
 The thenn file is the wiring. The intelligence lives in your commands, agents, and prompts.
 

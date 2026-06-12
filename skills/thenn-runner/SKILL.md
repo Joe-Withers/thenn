@@ -97,12 +97,122 @@ If neither exists, list available flows from both locations and stop with a clea
 
 ## Before executing any steps
 
+0. If a journal exists at `.thenn-state/runs/<ts>/run.yaml` with `status: in_progress`, you are resuming a journaled run invoked by `/thenn.resume`. Follow the **Run journal** pre-flight (next section) instead of starting at step 1. Read `run.yaml` to get `flow_path`, `flow_name`, and `resume_from`.
 1. Read the flow file with the Read tool
 2. Confirm it has a `name` field and a `steps` field. If either is missing, abort: "Flow file is missing required field: `<field>`."
 3. If `steps` is empty or has zero items, warn: "Flow '<name>' has no steps." and stop.
 4. Count total steps (N) for progress reporting.
 5. Check whether `.thenn-state/input.md` exists. If it does, read it — this is the user's input for this run and must be injected into every `type: agent` and `type: coordinator` step.
 6. Announce the start: `[thenn] Starting flow "<name>" — N steps`
+
+---
+
+## Run journal
+
+Every step execution is recorded in `.thenn-state/runs/<ts>/` so that a crashed run can be resumed. The `/thenn.resume` command sets up the journal and tells you the path. If you were not invoked from `/thenn.resume`, this section does not apply — proceed with the normal step execution below.
+
+**Directory layout (per run):**
+
+```
+.thenn-state/runs/<ts>/
+├── run.yaml                # run-level metadata
+└── steps/
+    ├── 00.yaml             # one file per step, keyed on 0-based index
+    ├── 01.yaml
+    └── ...
+```
+
+`<ts>` is `YYYYMMDDTHHMMSSZ` (UTC, ISO 8601 compact). On collision (two runs started in the same second), append `-<n>` (e.g. `<ts>-2`). Step filenames are `NN.yaml` — the index is the stable key, not the `id` (the user may rename ids between runs).
+
+**`run.yaml` schema:**
+
+```yaml
+run_id: 20260612T193045Z            # matches the parent directory name
+flow_name: bugfix                   # the flow's `name:` field
+flow_path: .thenn/bugfix.thenn      # resolved path used by /thenn.resume
+flow_hash: 9f2a...                  # sha256 of the flow file at journal creation; recorded, not enforced
+input_path: .thenn-state/input.md   # the input.md used by this run
+started_at: 2026-06-12T19:30:45Z
+finished_at: null                   # set when the run ends (any terminal status)
+status: in_progress                 # in_progress | completed | failed | stopped
+resume_from: 0                      # 0-based index; updated as steps complete
+```
+
+`status` transitions: `in_progress` → `completed` (success) | `failed` (a step errored) | `stopped` (user aborted / `on_failure: stop` halts).
+
+**Pre-flight (when invoked from `/thenn.resume`):**
+
+1. Read `.thenn-state/runs/<ts>/run.yaml`. Verify `status: in_progress`. Read `resume_from`, `flow_name`, `flow_path`, `input_path`.
+2. Read every `steps/NN.yaml` and categorize each step:
+   - `status: completed` with all `outputs_written` paths still on disk → eligible to skip.
+   - `status: completed` with missing outputs → downgrade to `pending` (overwrite the YAML with `status: pending`, `finished_at: null`), re-run.
+   - `status: running` (any type) → treat as `pending`. The step was interrupted; re-running is safe (see "Recovery semantics" below).
+   - `status: failed` / `skipped` → re-run. The user explicitly chose to resume; treat prior failure as transient.
+   - `status: pending` (or file missing) → run normally.
+3. Set `current_index = resume_from` (the field written to `run.yaml` after each step). If the field is stale, recompute it as the minimum index that is not `pending`.
+4. Announce: `[thenn] Resuming run <ts> — starting at step <current_index+1>/N` (where N is the total step count from the flow file).
+5. For each step index < `current_index` that is `status: completed`: announce `[thenn] Step i+1/N: [id] already completed, skipping`.
+6. Proceed with step `current_index` and beyond, writing journal entries as described below.
+
+**Skip policy (per step type):**
+
+| Type | How "already done" is detected | Action on resume |
+|---|---|---|
+| `agent` | `status: completed` AND every path in `outputs_written` still exists on disk | Skip with `[thenn] Step X/N: [id] already completed, skipping`. If any output is missing, downgrade to `pending` and re-run. |
+| `coordinator` | Same as `agent` | Same. |
+| `bash` | `status: completed` (trust the journal — re-running a non-idempotent command like `git commit` is exactly the failure mode this feature prevents) | Skip with the same announcement. |
+| `human` | Always re-ask, even if `status: completed` in the journal | Re-ask the user. A human gate is a confirmation of *current* state, not a memo. |
+| `loop` | The loop's `until` exit status (existing behavior) | If `until` exits 0, skip the whole loop. Otherwise re-enter from iteration 0; reset `last_iteration: 0` in the journal entry. |
+
+The `outputs_written` check is the consistency guarantee. If the user deleted a file between runs, the journal is downgraded and the step re-runs.
+
+**Per-step journal writes:**
+
+Before executing step at index `i`:
+
+1. `mkdir -p .thenn-state/runs/<ts>/steps` if it does not exist.
+2. Write `.thenn-state/runs/<ts>/steps/<NN>.yaml` (zero-padded to 2 digits, e.g. `00`, `01`, `02`, ..., `99`, `100`) with:
+   ```yaml
+   index: <i>
+   id: <step-id>
+   type: <type>
+   status: running
+   started_at: <now, ISO 8601 UTC>
+   finished_at: null
+   inputs_read: []                # populate as you read files during the step
+   outputs_written: []            # populate as you write files; required for agent/coordinator
+   ```
+3. Update `run.yaml.resume_from` to `i` (so a crash leaves a clear "this is where we died" marker).
+
+After completing step at index `i`:
+
+1. For `type: agent` and `type: coordinator`: collect `outputs_written` (the files you wrote). This is required — the step is not complete without it. If you did not write any files, set `outputs_written: []` and the step will be re-run on resume (downgrade triggered by missing outputs).
+2. For `type: bash`: set `outputs_written: []` (the step may or may not write files; do not claim specific outputs unless you verified them).
+3. Update `.thenn-state/runs/<ts>/steps/<NN>.yaml` with `status: completed` (or `failed` / `skipped`), `finished_at: <now>`, `result_summary: "<one-line>"`, `inputs_read`, `outputs_written`.
+4. Update `run.yaml.resume_from` to `i+1`.
+
+**Flow completion (journaled run):**
+
+On success: update `run.yaml` to `status: completed` and `finished_at: <now>`. Announce `[thenn] Flow "<name>" complete. All N steps succeeded.`
+
+On early stop (a step halts the flow): update `run.yaml` to `status: stopped` (or `failed` if the underlying step errored) and `finished_at: <now>`. The journal stays at `resume_from: <halting index>` so a future `/thenn.resume` picks up from there.
+
+**Recovery semantics:**
+
+A step with `status: running` and no `finished_at` is treated as `pending` on resume — the runner re-executes it. This is safe for all step types in practice:
+- `bash` steps are typically idempotent (`npm test`, `ruff check`); the user with `on_failure: human` will be re-asked.
+- `human` steps are re-asked (which is the desired behavior anyway).
+- `coordinator` / `agent` steps re-evaluate from scratch against their `outputs_written` check.
+
+The alternative — preserving in-flight prompt state — is too much ceremony for a rare case.
+
+**Concurrent in-progress runs:**
+
+If multiple journals exist with `status: in_progress` for the same `flow_name`, `/thenn.resume` will surface the conflict and let the user pick. The runner itself does not need to disambiguate.
+
+**Flow file edited between runs:**
+
+`flow_hash` is recorded but not enforced in v1. The runner resumes anyway, since the alternative (refusing to resume) is worse for the user. A short warning is printed if the hash mismatches: `[thenn] Warning: flow file has changed since this run started (was <old>, now <new>). Resuming at step <current_index+1> based on journal entries; verify the step still applies.`
 
 ---
 
@@ -324,6 +434,8 @@ On early stop:
 ```
 [thenn] Flow "<name>" stopped at step [id] (Step X/N). <reason>
 ```
+
+**For journaled runs (invoked from `/thenn.resume`):** also update `.thenn-state/runs/<ts>/run.yaml` as described in the "Run journal" section above — set `status: completed` (or `stopped` / `failed`) and `finished_at: <now>` before or after announcing completion. A journaled run that ends without updating `run.yaml` is a bug; the next `/thenn.resume` will see it as `in_progress` and resume from the last `resume_from`.
 
 ---
 
