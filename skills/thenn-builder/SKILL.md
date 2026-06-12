@@ -1,6 +1,6 @@
 ---
 name: thenn-builder
-description: Use this skill when scaffolding or updating a .thenn workflow file. Teaches Claude how to generate and modify flows, apply the input injection rules, and write the file to .thenn/. Loaded automatically by the /thenn new and /thenn update commands.
+description: Use this skill when scaffolding or updating a .thenn workflow file. Teaches Claude how to generate and modify flows, apply the input injection rules, and write the file to .thenn/. Loaded automatically by the /thenn.new and /thenn.update commands.
 version: 0.2.0
 ---
 
@@ -16,7 +16,7 @@ This skill defines the authoring protocol for `.thenn` workflow files. Follow th
 
 ```yaml
 name: flow-name           # required
-description: "..."        # shown in /thenn list
+description: "..."        # shown in /thenn.list
 input: "Prompt text"      # optional: ask this if no args given at run time
 
 steps:
@@ -112,7 +112,7 @@ Given a `<name>` and optional `<description>`:
 6. Confirm to the user:
    ```
    Created .thenn/<name>.thenn
-   Edit it to define your steps, then run it with: /thenn run <name>
+   Edit it to define your steps, then run it with: /thenn.run <name>
    ```
 
 ---
@@ -132,5 +132,5 @@ Given a resolved `<file-path>` and optional `<change>` description:
 5. Confirm to the user:
    ```
    Updated <file-path>
-   Run it with: /thenn run <name>
+   Run it with: /thenn.run <name>
    ```

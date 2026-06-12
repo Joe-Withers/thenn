@@ -14,9 +14,10 @@
 ## Usage
 
 ```
-/thenn run <name> [description]   Run a named flow
-/thenn new <name> [description]   Scaffold a new flow
-/thenn list                       List available flows
+/thenn.run <name> [input...]      Run a named flow
+/thenn.new <name> [description]   Scaffold a new flow
+/thenn.update <name> [change...]  Edit an existing flow
+/thenn.list                       List available flows
 ```
 
 ## How it works
@@ -62,13 +63,13 @@ steps:
 Run it with:
 
 ```
-/thenn run bugfix the login button throws a TypeError on Safari
+/thenn.run bugfix the login button throws a TypeError on Safari
 ```
 
 Scaffold a new flow from a description:
 
 ```
-/thenn new bugfix reproduce bug -> plan fix -> human review -> implement -> lint -> commit
+/thenn.new bugfix reproduce bug -> plan fix -> human review -> implement -> lint -> commit
 ```
 
 The thenn file is the wiring. The intelligence lives in your commands, agents, and prompts.

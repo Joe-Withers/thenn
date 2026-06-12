@@ -1,6 +1,6 @@
 ---
 name: thenn-runner
-description: Use this skill when executing a .thenn workflow file. Teaches Claude how to discover, parse, and execute each step in a thenn flow using claude, bash, human, and loop step types. Loaded automatically by the /thenn run command.
+description: Use this skill when executing a .thenn workflow file. Teaches Claude how to discover, parse, and execute each step in a thenn flow using claude, bash, human, and loop step types. Loaded automatically by the /thenn.run command.
 version: 0.1.0
 ---
 
@@ -16,7 +16,7 @@ This skill defines the execution protocol for `.thenn` workflow files. Follow th
 
 ```yaml
 name: flow-name           # required
-description: "..."        # optional, shown in /thenn list
+description: "..."        # optional, shown in /thenn.list
 
 steps:
   - id: step-id           # required; used in progress output and error messages
